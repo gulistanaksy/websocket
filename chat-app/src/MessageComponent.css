@@ -1,0 +1,67 @@
+.message-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .message-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .message {
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .message.sent {
+    background-color: #e0f7fa;
+    align-self: flex-end;
+  }
+  
+  .message.received {
+    background-color: #f1f8e9;
+    align-self: flex-start;
+  }
+  
+  .input-container {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+  }
+  
+  .input-container > div {
+    margin-bottom: 10px;
+  }
+  
+  input[type="number"],
+  input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-right: 10px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
