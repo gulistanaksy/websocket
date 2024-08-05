@@ -3,14 +3,14 @@ import { useSocket } from './SocketContext';
 import "./MessageComponent.css";
 const MessageComponent = () => {
   const { socket } = useSocket();
-  const [senderId, setSenderId] = useState('');
-  const [receiverId, setReceiverId] = useState('');
+  const [senderName, setSenderName] = useState('');
+  const [receiverName, setReceiverName] = useState('');
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    if (socket && senderId && receiverId) {
-      socket.emit('join_room', { senderId: parseInt(senderId), receiverId: parseInt(receiverId) });
+    if (socket && senderName && receiverName) {
+      socket.emit('join_room', { senderName: senderName, receiverName: receiverName });
 
       socket.on('load_messages', (oldMessages) => {
         setMessages(oldMessages);
@@ -20,13 +20,13 @@ const MessageComponent = () => {
         setMessages(oldMessages);
       });
     }
-  }, [socket, senderId, receiverId]);
+  }, [socket, senderName, receiverName]);
 
   const sendMessage = () => {
-    if (message.trim() && senderId && receiverId) {
+    if (message.trim() && senderName && receiverName) {
       socket.emit('send_message', {
-        senderId: parseInt(senderId),
-        receiverId: parseInt(receiverId),
+        senderName: senderName,
+        receiverName: receiverName,
         content: message,
       });
       setMessage('');
@@ -37,19 +37,19 @@ const MessageComponent = () => {
     <div>
       <form>
         <div>
-          <label>Gönderen ID:</label>
+          <label>Gönderen Name:</label>
           <input
-            type="number"
-            value={senderId}
-            onChange={(e) => setSenderId(e.target.value)}
+            type="string"
+            value={senderName}
+            onChange={(e) => setSenderName(e.target.value)}
           />
         </div>
         <div>
-          <label>Alıcı ID:</label>
+          <label>Alıcı Name:</label>
           <input
-            type="number"
-            value={receiverId}
-            onChange={(e) => setReceiverId(e.target.value)}
+            type="string"
+            value={receiverName}
+            onChange={(e) => setReceiverName(e.target.value)}
           />
         </div>
       </form>

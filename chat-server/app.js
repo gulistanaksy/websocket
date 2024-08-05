@@ -20,16 +20,37 @@ io.on('connection', (socket) => {
   console.log('Bir kullanıcı bağlandı');
 
   socket.on('send_message', async (data) => {
-    const { senderId, receiverId, content } = data;
+    const { senderName, receiverName, content } = data;
 
+    const senderProfileId= await prisma.profile.findFirst({
+      where:{
+        user:{
+            username:senderName,
+        }
+      },
+      select:{
+        id:true,
+      }
+    })
+    
+    const receiverProfileId= await prisma.profile.findFirst({
+      where:{
+        user:{
+            username:receiverName,
+        }
+      },
+      select:{
+        id:true,
+      }
+    })
+    
     // Odanın var olup olmadığını kontrol et
-
     let room = await prisma.room.findFirst({
       where: {
         users: {
           every: {
             profileId: {
-              in: [senderId, receiverId],
+              in: [senderProfileId, receiverProfileId],
             },
           },
         },
@@ -44,21 +65,21 @@ io.on('connection', (socket) => {
           name: `room_${senderId}_${receiverId}`,
           users: {
             create: [
-              { profileId: senderId },
-              { profileId: receiverId },
+              { profileId: senderProfileId },
+              { profileId: receiverProfileId },
             ],
           },
         },
       });
     }
-    console.log(room.id,senderId,receiverId);
+    console.log(room.id,senderProfileId,receiverProfileId);
     
     // Mesajı oluştur ve kaydet
     const message = await prisma.message.create({
       data: {
         content,
-        senderId,
-        receiverId,
+        senderId:senderProfileId,
+        receiverId:receiverProfileId,
         roomId: room.id,
       },
     });
@@ -85,49 +106,75 @@ io.on('connection', (socket) => {
     io.to(`room_${room.id}`).emit('receive_message', oldMessages );
   });
 
-  socket.on('join_room', async ({ senderId, receiverId }) => {
+  socket.on('join_room', async ({ senderName, receiverName }) => {
     // Odanın var olup olmadığını kontrol et
     
+    const senderProfileId= await prisma.profile.findFirst({
+      where:{
+        user:{
+            username:senderName,
+        }
+      },
+      select:{
+        id:true,
+      }
+    })
 
-    const room = await prisma.room.findFirst({
-      where: {
-        users: {
-          every: {
-            profileId: {
-              in: [senderId, receiverId],
+    const receiverProfileId= await prisma.profile.findFirst({
+      where:{
+        user:{
+            username:receiverName,
+        }
+      },
+      select:{
+        id:true,
+      }
+    })
+    console.log("sender:",senderProfileId,"receiver:",receiverProfileId);
+    
+    if( senderProfileId && receiverProfileId && senderProfileId.id && receiverProfileId.id){
+      const room = await prisma.room.findFirst({
+        where: {
+          users: {
+            every: {
+              profileId: {
+                in: [senderProfileId.id, receiverProfileId.id],
+              },
             },
           },
         },
-      },
-    });
-    
-    if (room) {
-      socket.join(`room_${room.id}`);
-      console.log(room.id, senderId,receiverId);
-      
-
-      // Eski mesajları al
-      const oldMessages = await prisma.message.findMany({
-        where: {
-          roomId: room.id,
-        },
-        include:{
-          sender:{
-            select:{
-              user:true,
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
       });
+
+      if (room) {
+        socket.join(`room_${room.id}`);
+        console.log(room.id, senderProfileId,receiverProfileId);
+        
+  
+        // Eski mesajları al
+        const oldMessages = await prisma.message.findMany({
+          where: {
+            roomId: room.id,
+          },
+          include:{
+            sender:{
+              select:{
+                user:true,
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        });
+        
       
+        socket.emit('load_messages', oldMessages);
+        
+      }
     
-      socket.emit('load_messages', oldMessages);
-      
     }
-  });
+    
+});
 
   socket.on('disconnect', () => {
     console.log('Bir kullanıcı bağlantıyı kesti');
