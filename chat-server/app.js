@@ -64,11 +64,11 @@ io.on('connection', (socket) => {
       if (!room) {
         room = await prisma.room.create({
           data: {
-            name: `room_${senderId}_${receiverId}`,
+            name: `room_${senderProfileId.id}_${receiverProfileId.id}`,
             users: {
               create: [
-                { profileId: senderProfileId },
-                { profileId: receiverProfileId },
+                { profileId: senderProfileId.id },
+                { profileId: receiverProfileId.id },
               ],
             },
           },

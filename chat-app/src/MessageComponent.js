@@ -23,7 +23,8 @@ const MessageComponent = () => {
     }
   }, [socket, senderName, receiverName]);
 
-  const sendMessage = () => {
+  const sendMessage = (e) => {
+    e.preventDefault()
     if (message.trim() && senderName && receiverName) {
       socket.emit('send_message', {
         senderName,
@@ -63,13 +64,15 @@ const MessageComponent = () => {
           ))}
         </div>
         <div className="input-container">
+          <form onSubmit={sendMessage}>
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Mesajınızı buraya yazın..."
           />
-          <button onClick={sendMessage}>Gönder</button>
+          <button>Gönder</button>
+          </form>
         </div>
       </div>
     </div>
