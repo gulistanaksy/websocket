@@ -44,66 +44,70 @@ io.on('connection', (socket) => {
       }
     })
     
-    // Odanın var olup olmadığını kontrol et
-    let room = await prisma.room.findFirst({
-      where: {
-        users: {
-          every: {
-            profileId: {
-              in: [senderProfileId, receiverProfileId],
+    if( senderProfileId && receiverProfileId && senderProfileId.id && receiverProfileId.id){
+      
+      // Odanın var olup olmadığını kontrol et
+      let room = await prisma.room.findFirst({
+        where: {
+          users: {
+            every: {
+              profileId: {
+                in: [senderProfileId.id, receiverProfileId.id],
+              },
             },
           },
         },
-      },
-    });
-
-    // Oda yoksa oluştur
-   
-    if (!room) {
-      room = await prisma.room.create({
-        data: {
-          name: `room_${senderId}_${receiverId}`,
-          users: {
-            create: [
-              { profileId: senderProfileId },
-              { profileId: receiverProfileId },
-            ],
+      });
+  
+      // Oda yoksa oluştur
+     
+      if (!room) {
+        room = await prisma.room.create({
+          data: {
+            name: `room_${senderId}_${receiverId}`,
+            users: {
+              create: [
+                { profileId: senderProfileId },
+                { profileId: receiverProfileId },
+              ],
+            },
           },
+        });
+      }
+      console.log(room.id,senderProfileId,receiverProfileId);
+
+      // Mesajı oluştur ve kaydet
+      const message = await prisma.message.create({
+        data: {
+          content,
+          senderId:senderProfileId.id,
+          receiverId:receiverProfileId.id,
+          roomId: room.id,
         },
       });
-    }
-    console.log(room.id,senderProfileId,receiverProfileId);
-    
-    // Mesajı oluştur ve kaydet
-    const message = await prisma.message.create({
-      data: {
-        content,
-        senderId:senderProfileId,
-        receiverId:receiverProfileId,
-        roomId: room.id,
-      },
-    });
-
-    // Eski mesajları al
-    const oldMessages = await prisma.message.findMany({
-      where: {
-        roomId: room.id,
-      },
-      include:{
-        sender:{
-          select:{
-            user:true,
+  
+      // Eski mesajları al
+      const oldMessages = await prisma.message.findMany({
+        where: {
+          roomId: room.id,
+        },
+        include:{
+          sender:{
+            select:{
+              user:true,
+            }
           }
-        }
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    // Her iki kullanıcıyı da odaya ekle
-    socket.join(`room_${room.id}`);
-    io.to(`room_${room.id}`).emit('receive_message', oldMessages );
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+  
+      // Her iki kullanıcıyı da odaya ekle
+      socket.join(`room_${room.id}`);
+      io.to(`room_${room.id}`).emit('receive_message', oldMessages );
+    }
+    
   });
 
   socket.on('join_room', async ({ senderName, receiverName }) => {
